@@ -1,0 +1,126 @@
+---
+title: "Homework_4"
+author: "Cai McCann"
+date: "2/5/2020"
+output: 
+  html_document:
+      toc: true
+---
+
+--------------------------------------------------------------------------------
+
+### Question 1
+
+```{r q1}
+# assign values to variables per instructions
+x <- 1.1
+a <- 2.2
+b <- 3.3
+
+# assign the subsequent expressions to variable z
+# part a.
+z <- x^(a^b)
+print(z)
+
+# part b. 
+z <- (x^a)^b
+print(z)
+
+# part c. 
+z <- 3*x^3 + 2*x^2 + 1
+print(z)
+```
+
+### Question 2
+
+```{r q2}
+# part a.  (1,2,3,4,5,6,7,8,7,6,5,4,3,2,1)
+a <- c(seq(from=1, to=8, by=1), seq(from=7, to=1)) # concatenate sequence 1-8 w/ sequence 7-1 (descending)
+print(a)  
+
+# part b. (1,2,2,3,3,3,4,4,4,4,5,5,5,5,5)
+# assign sequence 1-5 to variable b
+b <- seq(from=1, to=5) # prepare reference sequence called variable b
+# combine 5 different rep components as variable b2, each rep containing: variable b's indexed, corresponding element and the number of times repeated (increasing increment for each b element):
+b2 <- c(rep(b[1], 1), rep(b[2], 2), rep(b[3], 3), rep(b[4], 4), rep(b[5], 5)) # subset positive index values
+print(b2)
+
+# part c. (5,4,4,3,3,3,2,2,2,2,1,1,1,1,1)
+    # note to use the variable b again, which represents a sequence from 1 to 5
+# combine 5 different rep components as variable c, each rep containing: variable b's indexed element (corresponding from the 5th element to the 1st element) and the number of times repeated (increasing increment for each b element)
+c <- c(rep(b[5], 1), rep(b[4], 2),  rep(b[3], 3), rep(b[2], 4), rep(b[1], 5))
+print(c)
+
+```
+
+### Question 3
+
+Note the following polar coordinate/calculus-derived equations: 
+
+* r = sqrt(x^2 + y^2)
+
+* theta = atan(y/x)
+
+```{r q3}
+# create a vector of two random uniform numbers
+vec<-runif(2)
+print(vec)
+
+# In a spatial map, these can be interpreted as x and y coordinates that give the location of an individual 
+# Using one of R’s inverse trigonometry functions (asin(), acos(), or atan()), convert these numbers into polar coordinates 
+
+# subset 1st and 2nd element from the vector within calculations...
+r <- sqrt(vec[1]^2 + vec[2]^2) 
+theta <- atan(vec[2]/vec[1]) 
+
+# combine newly calculated polar coordinates into variable polar_coord and print
+polar_coord <- c(r,theta) 
+print(polar_coord)
+
+```
+### Question 4
+
+```{r q4}
+# Set up Noah's Ark queue
+queue <- c("sheep", "fox", "owl", "ant") # sheep=first in line (for now...)
+
+# a.	the serpent arrives;
+queue <- c(queue, "serpent") # serpent concatenated after existing queue
+print(queue)
+
+# b.	the sheep enters the ark;
+ark <- "sheep"
+queue <- queue[-1] # sheep is out of queue now
+print(queue)
+
+# c.	the donkey arrives and talks his way to the front of the line;
+queue <- c("donkey", queue) # donkey concatenated before existing queue
+print(queue)
+
+# d.	the serpent gets impatient and leaves;
+queue <- queue[-5]
+print(queue)
+
+# e.	the owl gets bored and leaves;
+queue <- queue[-3]
+print(queue)
+
+# f.	the aphid arrives and the ant invites him to cut in line.
+queue <- c(queue[1:2], "aphid", queue[3])
+print(queue)
+
+# g.	Finally, determine the position of the aphid in the line.
+which(queue == "aphid")
+# The aphid is third in line!
+
+```
+### Question 5
+
+```{r q5}
+# create a vector of all of the integers from 1 to 100 
+vec1 <- seq(from=1, to=100)
+
+# subset for values in vec1 that are *not* (!=) divisible by 2, 3, or 7 (thus !=0)
+vec2 <- which(vec1[]%%2 !=0 & vec1[]%%3 !=0 & vec1[]%%7 != 0) 
+print(vec2)
+```

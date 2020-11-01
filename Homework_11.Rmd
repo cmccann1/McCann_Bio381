@@ -1,0 +1,126 @@
+---
+title: "Homework_11"
+date: "4/8/2020"
+author: "Cai McCann"
+output: 
+  html_document:
+      toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+--------------------------------------------------------------------------------
+
+# Batch Processing Question: 
+
+Repeat the exercise from the Batch Processing Lecture (7th April), but do it using real data sets rather than purely simulated. Check with folks in your lab to see if there are multiple data sets available for analysis. Stick to simple data analyses and graphics, but try to set it up as a batch process that will work on multiple files and save summary results to a common file.
+
+### Function for linear regression analysis and summary results
+
+```{r linear regression function} 
+
+# ----------------------------------------------------------
+# FUNCTION reg_stats
+# description: fits linear models, extra model stats
+# inputs: 2-column data frame (x and y)
+# outputs: slope, p-value, and r2
+############################################################
+reg_stats <- function(d=NULL) {
+            if(is.null(d)) {
+              cbmi <- runif(150) 
+              lsystolic <- runif(150) 
+              d <- data.frame(cbmi,lsystolic)
+            }  
+  . <- lm(data=d,d[,2]~d[,1])
+  . <- summary(.)
+  stats_list <- list(Slope=.$coefficients[2,1],
+                     pVal=.$coefficients[2,4],
+                     r2=.$r.squared)
+  
+return(stats_list)
+
+} # end of reg_stats
+# ----------------------------------------------------------
+
+```
+
+
+### Set up and Batch Process in Data
+
+```{r setup and batch process, warning=FALSE, message=FALSE}
+# Preliminaries ---------------------------------------------------------
+# load packages
+library(ggplot2)
+library(TeachingDemos)
+
+char2seed("spring snow")
+
+# Global variables ---------------------------------------------------------
+file_folder <- "bp_bmi_analysis/" 
+n_files <- 3
+file_out <- "BMIbpStatsSummary.csv"
+file_names <- list.files(path=file_folder)
+
+# Create a data frame to hold summary file statistics
+ID <- seq_along(file_names)
+f_name <- file_names
+slope <- rep(NA,length(f_name))
+p_val <- rep(NA,length(f_name))
+r2 <- rep(NA,length(f_name))
+
+stats_out <- data.frame(ID,f_name,slope,p_val,r2)
+
+#########################################################################
+# initiate batch process to loop through individual files
+
+for (i in seq_along(file_names)) { # starts for loop in the function
+  data <- read.table(file=paste(file_folder,file_names[i],
+                                sep=""),
+                                sep=",",
+                     header=TRUE)
+  # apply calculation and extract results
+  . <- reg_stats(data) # pull out regression stats from clean file
+  stats_out[i,3:5] <- unlist(.) # unlist, copy into last 3 columns
+} # end of for loop
+
+
+# set up data file and incorporate time stamp and minimal metadata
+write.table(cat("# Summary statistics for",
+                " linear regression batch processing", 
+                "\n",
+                "# timestamp: ",
+                as.character(Sys.time()),
+                "\n",
+                "# CLM", 
+                "\n",
+                "# ____________________", 
+                "\n",
+                "\n",
+              file=file_out,
+              row.names="",
+              col.names="",
+              sep=""))
+                
+# now add the data frame
+write.table(x=stats_out,
+            file=file_out,
+            sep=",",
+            row.names=FALSE,
+            append=TRUE)
+
+# ----------------------------------------------------------
+
+print(stats_out)
+
+```
+
+*Here is the resulting output CSV for reference:*
+
+```{r, echo=FALSE}
+# installed package to be able to embed this: 
+# xfun::pkg_load2(c("htmltools", "mime"))
+
+# a single file of the output statistics
+xfun::embed_file('BMIbpStatsSummary.csv')
+
+```

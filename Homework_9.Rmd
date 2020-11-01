@@ -1,0 +1,243 @@
+---
+title: "Homework_9"
+author: "Cai McCann"
+date: "3/25/2020"
+output: 
+  html_document:
+      toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+--------------------------------------------------------------------------------
+
+### Question 1: 
+
+Use the code that you worked on in Homework #7 (creating fake data sets) , and re-organize it following the principles of structured programming. Do all the work in a single chunk in your R markdown file, just as if you were writing a single R script. Start with all of your annotated functions, preliminary calls, and global variables. The program body should be only a few lines of code that call the appropriate functions and run them in the correct order. Make sure that the output from one function serves as the input to the next. You can either daisy-chain the functions or write separate lines of code to hold elements in temporary variables and pass the along.
+
+```{r single chunk structured programming of HW7, warning=FALSE, message=FALSE}
+
+# ---------------------------------
+# A single R script following the principles of structured programming
+# description: to simulate data, conduct an ANOVA, and summarize results (statistics and graph)
+# 26 March 2020
+# CLM
+# ---------------------------------
+#
+
+## PSEUDOCODE #######################################################################
+
+# get_data() = generate a simulation of data for analysis
+# calc_anova() = conducts ANOVA 
+# summarize_anova() = extracts ANOVA results 
+# graph_ano() = visualize results of analysis 
+
+#########################################################################
+
+# Load libraries ---------------------------------------------------------
+
+library(ggplot2) 
+library(dplyr)
+
+# Global variables ---------------------------------------------------------
+
+# specify group attributes
+n_group <- 3 # number of groups
+n_name <- c("Nonsmoking","Smoking","Formersmoking") # name the groups, these are essentially global variables
+n_size <- c(707,175,355) # group sizes
+n_mean <- c(25,28,28) # mean BMI value
+n_sd<- c(6,6,6) # variance for each group
+
+
+# Program functions ---------------------------------------------------------
+
+# Part 1: get_data() function -----------------------------------------------------------
+# ---------------------------------
+#  FUNCTION get_data
+#  description: simulates BMI value for 3 groups of various smoking status (smoking, nonsmoking, former)
+#  inputs: vectorized values of number of groups, group names, sample size, means, and standard deviations
+#  outputs: a dataframe comprising simulated data under a normal distribution (col = id, fake_data_lab, norm_val)
+###################################
+  get_data <- function(n_group=3,
+                       n_name=c("Nonsmoking","Smoking","Formersmoking"),
+                       n_size=c(707,175,355),
+                       n_mean=c(25,28,28),
+                       n_sd=c(6,6,6)) {
+    # organize these data into a data frame with the appropriate structure
+    fake_data_lab <- rep(n_name, n_size)
+    id <- 1:(sum(n_size))      
+    norm_val <- c(rnorm(n=n_size[1],mean=n_mean[1],sd=n_sd[1]),
+                 rnorm(n=n_size[2],mean=n_mean[2],sd=n_sd[2]),
+                 rnorm(n=n_size[3],mean=n_mean[3],sd=n_sd[3]))
+    my_data <- data.frame(id,fake_data_lab,norm_val)
+
+return(my_data)
+} # end of get_data
+# ---------------------------------
+
+# Part 2: calc_anova() function ---------------------------------------------------------
+# ---------------------------------
+#  FUNCTION calc_anova
+#  description: conduct ANOVA on simulated data from get_data() function
+#  inputs: my_data()'s dataframe containing individuals, smoking status, and BMI (col = id, fake_data_lab, norm_val)--specifically for col 2=fake_data_lab and col 3=norm_val
+#  outputs: ANOVA results
+###################################
+  calc_anova <- function(data=my_data) { 
+    
+    my_anova <- aov(data[,3] ~ data[,2], data=my_data)  # BMI by smoking status
+                                                       # col 2=fake_data_lab and col 3=norm_val           
+    
+    return(my_anova)
+} # end of calc_anova
+# ---------------------------------
+
+# Part 3: summarize_anova() function ---------------------------------------------------------
+
+# ---------------------------------
+#  FUNCTION summarize_anova
+#  description: extract output from ANOVA model  
+#  inputs: calc_anova()'s generated ANOVA model 
+#  outputs: ANOVA output table, especially the F statistic & p value 
+#################################### thanks to Sophie for explaining processes!
+  summarize_anova <- function(output=my_anova) {
+    
+    x <- summary(output) # summarize ANOVA
+    print(x)
+    ls_anova <- list(F_stat=unlist(x)[7], p_val=unlist(x)[9]) # extract F and pval
+    print(ls_anova)
+
+} # end of summarize_anova
+# ---------------------------------
+
+# Part 4: graph_ano() ---------------------------------------------------------
+
+# ---------------------------------
+#  FUNCTION graph_ano()
+#  description: visualize the simulated data (BMI by smoking status), specifically as a boxplot
+#  inputs: get_data() function's outputs of a dataframe containing id, smoking status, and BMI
+#  outputs: boxplot (BMI by smoking status)
+###################################
+ graph_ano <- function(data=my_data) { 
+    p_ano <- ggplot(data=my_data,
+                     aes(x=fake_data_lab,
+                         y=norm_val,
+                         fill=fake_data_lab)) + 
+    geom_boxplot() + 
+    labs(title='BMI by smoking status', 
+         x='Smoking status', 
+         y='BMI') +  
+    guides(fill=FALSE) # removed legend because redundant
+    
+    print(p_ano)
+} # end of graph_ano()
+# ---------------------------------
+
+# Program body ---------------------------------------------------------
+
+my_data <- get_data()
+
+my_anova <- calc_anova(data=my_data)
+
+summary_anova <- summarize_anova(output=my_anova) 
+
+my_graph <- graph_ano(data=my_data)
+
+
+```
+
+### Question 2: 
+
+Once your code is up and working, modify your program do something else: record a new summary variable, code a new statistical analysis, or create a different set of random variables or output graph. Do not rewrite any of your existing functions. Instead, copy them, rename them, and then modify them to do new things. Once your new functions are written, add some more lines of program code, calling a mixture of your previous functions and your new functions to get te job done.
+
+*I was curious about visualizing the distributions of BMI by smoking status in an alternate way, overlapping histograms. I like how the histograms display skew in another helpful way for viewers to conceptualize and also show the relative counts among differen smoking statuses.*
+
+```{r modification on existing structured programming body}
+
+# ---------------------------------
+# A **modified* single R script following the principles of structured programming
+# description: to simulate data, conduct an ANOVA, and summarize results (statistics and graph)
+# 26 March 2020
+# CLM
+# ---------------------------------
+
+
+## PSEUDOCODE ####################################################################
+
+# get_data() = generate a simulation of data for analysis
+# calc_anova() = conducts ANOVA 
+# summarize_anova() = extracts ANOVA results 
+# graph_hist() = visualize results of analysis **as histograms**
+
+#########################################################################
+
+# *For brevity, assume the initial set up and some details on functions are similar to the original version of the structured programming 
+
+# Program functions ---------------------------------------------------------
+
+#  FUNCTION get_data
+  get_data2 <- function(n_group=3,
+                       n_name=c("Nonsmoking","Smoking","Formersmoking"),
+                       n_size=c(707,175,355),
+                       n_mean=c(25,28,28),
+                       n_sd=c(6,6,6)) {
+    fake_data_lab <- rep(n_name, n_size)
+    id <- 1:(sum(n_size))      
+    norm_val <- c(rnorm(n=n_size[1],mean=n_mean[1],sd=n_sd[1]),
+                 rnorm(n=n_size[2],mean=n_mean[2],sd=n_sd[2]),
+                 rnorm(n=n_size[3],mean=n_mean[3],sd=n_sd[3]))
+        my_data2 <- data.frame(id,fake_data_lab,norm_val)
+return(my_data2)
+}
+#  FUNCTION calc_anova
+  calc_anova2 <- function(data=my_data2) { 
+    my_anova2 <- aov(data[,3] ~ data[,2], data=my_data2)
+    return(my_anova2)
+} 
+
+#  FUNCTION summarize_anova
+  summarize_anova2 <- function(output=my_anova2) {
+    y <- summary(output) 
+    print(y)
+    ls_anova2 <- list(F_stat=unlist(y)[7], p_val=unlist(y)[9])
+    print(ls_anova2)
+}
+
+# new graph function called graph_hist()-------------------------------------------
+
+# ---------------------------------
+#  FUNCTION graph_hist()
+#  description: visualize the simulated data (BMI by smoking status), specifically as **overlapping histograms**
+#  inputs: get_data2() function's outputs of a dataframe containing id, smoking status, and BMI
+#  outputs: histogram (BMI by smoking status)
+###################################
+graph_hist <- function(data=my_data2) { 
+  # ggplot (data = my_data,
+  #       mapping = aes(x = norm_val)) + 
+  #  geom_histogram(fill = fake_data_lab) 
+   
+   my_hist <- ggplot(data=my_data2,
+                       aes(x=norm_val)) + # distribution of BMI
+         geom_histogram(aes(fill=factor(fake_data_lab)), bins=50, # tighter bin #s
+                   alpha=0.5) + # make 50% transparent since multiple histograms
+     # clean up labels on the graph
+     labs(title='Distributions of BMI by Smoking Status',
+          x='BMI',
+          fill='Smoking status')
+       print(my_hist)
+} # end of graph_hist()
+# ---------------------------------
+  
+  
+# Program body ---------------------------------------------------------
+
+my_data2 <- get_data2()
+
+my_anova2 <- calc_anova2(data=my_data2)
+
+summary_anova2 <- summarize_anova2(output=my_anova2) 
+
+my_graph <- graph_ano(data=my_data2)
+my_graph2 <- graph_hist(data=my_data2)
+
+
+```

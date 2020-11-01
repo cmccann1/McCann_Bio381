@@ -1,0 +1,337 @@
+---
+title: "Homework_10"
+author: "Cai McCann"
+date: "4/1/2020"
+output: 
+  html_document:
+      toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+--------------------------------------------------------------------------------
+
+## For loops and randomization tests
+
+### Question 1: 
+
+Using a for loop, write a function to calculate the number of zeroes
+in a numeric vector. Before entering the loop, set up a counter variable counter <- 0.
+Inside the loop, add 1 to counter each time you have a zero in the matrix.
+Finally, use return(counter) for the output.
+
+```{r for loop, warning=FALSE}
+
+# ---------------------------------
+#  FUNCTION calc_zero
+#  description: calculate the number of zeroes in a numeric vector
+#  inputs: numeric vector/values
+#  outputs: number of zeroes that the vector possess
+###################################
+
+calc_zero <- function(vec) { # start of function
+   
+   counter <- 0 # set up a counter variable 
+   
+   for (i in 1:length(vec)) { # start of for loop
+     if (vec[i]==0) { # start of if statement
+       counter <- counter + 1 
+     } # end if statement
+   } # end for loop
+ return(counter)
+ } # end of calc_zero function
+	
+# ---------------------------------
+
+# for the purposes of feeding the function, create a numeric vector called vec
+library(TeachingDemos)
+set.seed(10) # attempt to standardize my count of zeros
+
+vec <- sample(0:10, 100, replace = TRUE)
+print(vec) # 7 zeroes expected based on when I ran it
+calc_zero(vec) # verified as 7 zeros!
+```
+
+### Question 2: 
+
+Use subsetting instead of a loop to rewrite the function as a single line of code.
+	
+```{r subsetting}
+library(TeachingDemos)
+set.seed(10) # ensure that sampling is similar to question 1
+# ---------------------------------
+#  FUNCTION calc_zero_sub
+#  description: calculate the number of zeros in a numeric vector, using subsetting
+#  inputs: numeric vector
+#  outputs: number of zeros
+###################################
+  calc_zero_sub <- function(vec) { 
+    counter <- length(vec[vec==0]) # set up a counter variable 
+                                   # counts the number of elements equal to zero 
+                                   # specified within vector called vec (refer to question 1) 
+    print(counter)
+  }
+
+# end of calc_zero_sub
+# ---------------------------------
+# using the same vector from question 1, called vec
+calc_zero_sub(vec)
+
+# option 2: takes less of the function format but represents a single line of code
+length(vec[vec==0]) # counts the number of elements within vec equal to zero
+
+```
+
+### Question 3: 
+
+Write a function that takes as input two integers representing the number of rows and columns in a matrix. The output is a matrix of these dimensions in which each element is the product of the row number x the column number.
+
+```{r matrix building}
+# ---------------------------------
+#  FUNCTION matrix_multiply
+#  description: creates a matrix of specified dimensions where each element is the product of the row number and column number
+#  inputs: two integers corresponding to the number of rows and columns in a matrix
+#  outputs: matrix of specified dimensions containing products of the row and column numbers
+###################################
+
+matrix_multiply <- function(nrow=4, ncol=5) {
+    m <- matrix(nrow=nrow,ncol=ncol) # takes row/col input into a matrix
+
+    for (i in 1:nrow(m)) { 
+      for (j in 1:ncol(m)) {
+        m[i,j] <- i * j # product of row*col for cells
+      } # end of inner (column) loop 
+    } # end of outer (row) loop 
+    print(m)
+} # end of matrix_multiply
+# ---------------------------------
+
+# Verification of function 
+matrix_multiply() # verify with the preset row/col values, 4 and 5
+matrix_multiply(nrow=5,ncol=6) # verify with alternates
+
+```
+
+### Question 4: 
+
+Use the code from the upcoming April 2nd lecture (Randomization Tests) to design and conduct a randomization test for some of your own data. You will need to modify the functions that read in the data, calculate the metric, and randomize the data. Once those are set up, the program should run correctly calling your new functions. Also, to make your analysis fully repeatable, make sure you set the random number seed at the beginning (use either set.seed() in base R, or char2seed in the TeachingDemos package
+
+#### A note on data: 
+
+*For our particular study data, we consider briefly three "conditions" for the randomization analysis: 
+
+-**Smoking** (1) = one group comprising individuals who currently smoke (every day, some days, or light tobacco smoking)
+
+-**Nonsmoking** (2) = one group comprising individuals who currently smoke and/or received passive smoke exposure only 
+
+-**Formersmoking** (3) = one group comprising individuals who used to be smokers but no longer smoke
+
+##### *Goals: read in the data, calculate the metric, and randomize the data.*
+
+#### Steps in randomization test 
+
+  1. Define a metric X as a single number to represent pattern
+  
+  *Unlike the class example with linear regression and difference in means, this case may be a little more complicated. In our case, randomization on one-way analysis of variance for multiple groups lends itself to multiple means. To this end, we will attempt to take into account the means of all the groups, thus choosing the F statistic for our metric on group differences for our sample data.*
+  
+  2. Calculate X(obs), the metric for the empirical (= observed) data that we start with.
+   
+  3. Randomize or reshuffle the data. Randomize in a way that would uncouple the association between observed data and their assignment to treatment groups. Ideally, the randomization only affects the pattern of treatment effects in the data. Other aspects of the data (such as sample sizes) are preserved in the randomization. Simulates the null hypothesis!
+  
+  4. For this single randomization, calculate X(sim). If null hypothesis is true, X(obs) is similar to X(sim) . If null hypothesis is false, then X(obs) is very different than X(sim).
+  
+  *More specifically, our null hypothesis states that the treatment has no effect on how participants perform, while the alternative hypothesis is simply that different treatments have an effect. That is, under the null hypothesis, the smoking status that is associated with a participant is independent of the measured BMI of the person*
+  
+  5. Repeat steps (3) and (4) many times (typically n=1000). This will let us visualize as a histogram the distribution of X(sim); distribution of X values when the null hypothesis is true.
+  
+  6. Estimate the tail probability of the observed metric (or something more extreme) given the null distribution (p(X(obs)|H0).
+
+
+```{r randomization test, warning=FALSE, message=FALSE}
+# Preliminaries -------------------------------
+
+library(ggplot2)
+library(TeachingDemos)
+
+# set seed for reproducibility
+# char2seed("pandemic dreams") # used initially
+char2seed("Life is what happens when you're busy making other plans.") # trying another seed
+# Build functions -------------------------------
+# ----------------------------------------------------------
+# FUNCTION read_data
+# description: read in (or generate) data set for analysis
+# inputs: file name (or nothing)
+# outputs: 3 column data frame "df" of observed data (ID, x_obs, y_obs)
+############################################################
+############################################################
+read_data <- function(z=NULL) {
+          if(is.null(z)) {
+            # specify group attributes
+            n_group <- 3 # number of groups
+            n_name <- c("Nonsmoking","Smoking","Formersmoking") # name groups 
+            n_size <- c(150,150,150)
+            n_mean <- c(25,28,28)
+            n_sd<- c(6,6,6)
+            # organize these data into a data frame or tibble with the appropriate structure
+            smoking_cat <- rep(n_name, n_size)
+            id <- 1:(sum(n_size))      
+            cbmi <- c(rnorm(n=n_size[1],mean=n_mean[1],sd=n_sd[1]),
+                       rnorm(n=n_size[2],mean=n_mean[2],sd=n_sd[2]),
+                       rnorm(n=n_size[3],mean=n_mean[3],sd=n_sd[3]))
+            df <- data.frame(id,smoking_cat,cbmi) }
+
+   df <- read.table(file=z,
+                 header=TRUE,
+                 stringsAsFactors=FALSE,
+                 sep=',')
+  return(df)
+
+} # end of read_data
+# ----------------------------------------------------------
+# read_data('all_smoking_bmi_coded150.csv')
+# Coded as:
+# 1=Smoking
+# 2=Nonsmoking
+# 3=Formersmoking
+
+# ----------------------------------------------------------
+# FUNCTION get_metric
+# description: calculate ANOVA's F statistic as metric for randomization test
+# input: 2-column data frame for ANOVA
+# output: F statistic 
+############################################################
+
+get_metric <- function(z=NULL) {  # BMI by smoking status
+      . <- aov(z[,3] ~ z[,2], data=z) # temporarily store values as "."
+      . <- summary(.)# summarize ANOVA
+      . <- unlist(.)
+      Fval <- (.)[7] # extract F 
+      
+    return(Fval)    
+} # end of get_metric
+# ----------------------------------------------------------
+# summary(aov(df[,3]~df[,2])) # verified
+# get_metric(df)
+# both with Fval of 15.52
+
+# ----------------------------------------------------------
+# FUNCTION shuffle_data
+# description: randomize data for ANOVA modeling 
+# inputs: 3 column data frame (ID, xvar, yvar)
+# outputs: 3 column data frame (ID, xvar, yvar)
+############################################################
+
+shuffle_data <- function(z=NULL) {
+        z[,3] <- sample(z[,3]) # sample all from col 3
+        
+return(z)
+} # end of shuffle_data
+# ----------------------------------------------------------
+# shuffle_data()
+
+# ----------------------------------------------------------
+# FUNCTION get_pval
+# description: calculate p value from simulation
+# inputs: list of observed metric and vector of simulated metrics 
+# outputs: lower and upper tail probability value
+############################################################
+get_pval <- function(z=NULL) {
+        if(is.null(z)){
+                z <- list(rnorm(1),rnorm(1000)) } # (observed, simulated)
+  
+  p_lower <- mean(z[[2]]<=z[[1]]) # lower tail: simulated < observed    
+                                  # proportion of 1000 
+  p_upper <- mean(z[[2]]>=z[[1]]) # upper tail: simulated > observed 
+
+return(c(pL=p_lower,pU=p_upper))
+
+} # end of get_pval
+
+# [[]] pulls from a list and enables calculations/operations, e.g. [[2]]==second listed element in input
+# ----------------------------------------------------------
+# get_pval()
+
+# ----------------------------------------------------------
+# FUNCTION plot_ran_test
+# description: create a ggplot of histogram of simulated values
+# inputs: list of observed metric and vector simulated metrics
+# outputs: saved ggplot graph
+############################################################
+plot_ran_test <- function(z=NULL) {
+        if(is.null(z)){
+                z <- list(rnorm(1),rnorm(1000)) } # our metric (from real data, from simulated)
+  df <- data.frame(ID=seq_along(z[[2]]), x_sim=z[[2]])
+  p1 <- ggplot(data=df, mapping=aes(x=x_sim)) # distribution of simulated metric
+  p1 + geom_histogram(mapping=aes(fill=I("goldenrod"),
+                                  color=I("black"))) + 
+    geom_vline(aes(xintercept=z[[1]],col="blue")) + # observed metric
+    labs(title='Distribution of Randomization Test Simulated F values',
+         x='Simulated F values')
+
+} # end of plot_ran_test
+# ----------------------------------------------------------
+# plot_ran_test()
+
+# Program body ---------------------------------------------------------
+
+n_sim <- 100000 # number of simulated data sets, 1000 recommended
+x_sim <- rep(NA,n_sim) # set up empty vector for simulated slopes
+
+df <- read_data("all_smoking_bmi_coded150.csv") # get my data
+Fval <- get_metric(df) # get F statistic of observed data
+
+# run simulation (for n_sim=1000 times, reshuffle dataframe, extract Fval, and store in x_sim)
+for (i in seq_len(n_sim)) { # seq_len()==single number to create sequence
+  x_sim[i] <- get_metric(shuffle_data(df)) 
+} 
+
+# store output as a list to be input for get_pval function
+metrics <- cbind(list(Fval,x_sim),row.names=NULL) 
+# notes: 
+# - make sure to check that Fval and x_sim datatypes match (typeof(), "doubles")
+# in order to compare appropriately in get_pval()
+# - cbind(..., row.names=NULL) to remove warning in anticipating for how R discards row.names when cycling through the first column.
+
+get_pval(metrics) # establishes upper/lower tails of simulated Fvals
+plot_ran_test(metrics) # plots histogram of simulated Fvals vs. observed Fval
+
+```
+
+**A note on the Randomization test results**
+
+*This histogram is incredibly curious--very different from the class example with linear regression--and represents the sampling distribution of all possible values of the F statistic.* 
+
+*To this end, it is important to highlight that the observed F value is higher than any of the simulated F values. Revisiting our randomization test for these data, we stated that if null hypothesis is false, then X(obs) is very different than X(sim).* 
+
+*The histogram possessing an extreme right skew is indicative of a very big difference between the data and the null hypothesis; we may have evidence to reject the null hypothesis and consider there to be a difference among groups.*
+
+### Question 5: 
+
+For comparison, calculate in R the standard statistical analysis you would use with these data. How does the p-value compare for the standard test versus the p value you estimated from your randomization test? If the p values seem very different, run the program again with a different starting seed (and/or increase the number of replications in your randomization test). If there are persistent differences in the p value of the standard test versus your randomization, what do you think is responsible for this difference?
+
+```{r q5 verification standard ANOVA}
+my_data <- read_data("all_smoking_bmi_coded150.csv") # get my data
+# consider the differences among the 3 groups using ANOVA
+my_aov <- aov(my_data[,3]~my_data[,2])
+Pval <- unlist(summary(my_aov))[9]
+print(Pval)
+# Note also the F value: 
+# my_Fval <- unlist(summary(my_aov))[7]
+# print(my_Fval)
+  # output: F value = 15.51845 
+
+```
+
+**Discussion of standard and randomization approaches**
+
+*The observed F (F = 15.52) was obtained by standard analysis of variance program and has an associated p value of 9.473901e-05. The p-value for the standard ANOVA test (p value = 9.473901e-05) seems somewhat similar to the p value estimated from the randomization test involving an F value metric (pU = 0.00007).(1)*
+
+*Both the similar standard results and the fact that the p value is coming from a non-uniform distribution (2) corroborates my interpretation to reject the null hypothesis that treatments have no effect on how participants perform--it is possible different treatments have an effect. More specifically in the context of these particular data, the smoking status that is associated with a participant may be have an effect on the measured BMI of the person.*
+
+
+
+
+*1 = To verify my results, I reran the randomization test with a different starting seed and increased the number of replications from 1,000 to eventually 100,000. 
+
+*2 = One concern of mine regrading p values: I feel that small p values do not necessarily demonstrate the null is false while large p values do not demonstrate that the null is true--rather, it is important to consider the nature of the distribution of the small/large p value (e.g. uniform distribution, right-skewed distribution, etc.). Therefore, comparing p values will only take us so far.
+

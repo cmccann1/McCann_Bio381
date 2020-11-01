@@ -1,30 +1,64 @@
 ---
 title: "BIOL 381"
-author: "CLM"
-date: "11/1/2020"
-output: html_document
+author: "Cai McCann"
+date: "Spring 2020"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+--------------------------------------------------------------------------------
 
-## R Markdown
+## Homework 1/2
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+[Homework 1 Typora html](Typora_Homework_1.html) 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+[Homework 1 Typora PDF](Typora_Homework_1.pdf)
 
-```{r cars}
-summary(cars)
-```
+## Homework 3
+[Homework_3](Homework_3.html)
 
-## Including Plots
+## Homework 4
+[Homework_4](Homework_4.html)
 
-You can also embed plots, for example:
+## Homework 5
+[Homework_5](Homework_5.html)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+## Homework 6
+[Homework_6](Homework_6.html)
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Homework 7
+[Homework_7](Homework_7.html)
+
+## Homework 8
+[Homework_8](Homework_8.html)
+
+## Homework 9
+[Homework_9](Homework_9.html)
+
+## Homework 10
+[Homework_10](Homework_10.html)
+
+## Homework 11
+[Homework_11](Homework_11.html)
+
+## Homework 12
+[Homework_12](Homework_12.html)
+
+
+## Other Notes: 
+ 
+Important note: for the purposes of demonstrating the wide variety of capabilities in R, I used study data from the Vermont Diabetes Information System
+(VDIS) study. VDIS reports on the study design and baseline characteristics of the population, and is well accepted by patients, providers, and laboratory staff. These results also compare favorably to recent national reports.
+
+Here is an article about the study, in case you’d like to learn more about these data <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2518939/>
+
+*Citation: MacLean, C. D., Littenberg, B., Gagnon, M., Reardon, M., Turner, P. D., & Jordan, C. (2004). The Vermont Diabetes Information System (VDIS): Study Design and Subject Recruitment for a Cluster Randomized Trial of a Decision Support System in a Regional Sample of Primary Care Practices. Clinical Trials (London, England), 1(6), 532–544.*
+
+## Acknowledgements: 
+
+Thank you, Lauren Ash, for an eye-popping prettydoc theme and your help during labs!
+
+A special thanks to Dr. Gotelli for his expertise in R and support for the BIOL 381 course. 
+

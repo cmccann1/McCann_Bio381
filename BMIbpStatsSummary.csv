@@ -1,0 +1,9 @@
+# Summary statistics for linear regression batch processing
+# timestamp: 2020-11-01 11:30:31
+# CLM
+# ____________________
+
+"ID","f_name","slope","p_val","r2"
+1,"former_bp_bmi.csv",0.716924824386809,7.0791946564848e-07,0.0685158347865081
+2,"never_bp_bmi.csv",0.911853955923633,3.43563571845097e-22,0.128098782849715
+3,"smoking_bp_bmi.csv",0.49578516041949,0.0180490017249867,0.0342369999632212

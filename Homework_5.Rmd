@@ -1,0 +1,196 @@
+---
+title: "Homework_5"
+author: "Cai McCann"
+date: "2/12/2020"
+output: 
+  html_document:
+      toc: true
+---
+
+--------------------------------------------------------------------------------
+
+### Question 1:
+
+Assign to the variable n_dims a single random integer between 3 and 10.
+
+-	Create a vector of consecutive integers from 1 to n_dims2n_dims2.
+
+-	Use the sample function to randomly reshuffle these values.
+
+-	create a square matrix with these elements.
+
+-	print out the matrix.
+
+-	find a function in r to transpose the matrix.
+
+-	print it out again and note how it has changed.
+
+-	calculate the sum and the mean of the elements in the first row and the last row.
+
+-	read about the eigen() function and use it on your matrix
+
+-	look carefully at the elements of values and vectors. What kind of numbers are these?
+
+-	dig in with the typeof() function to figure out their type.
+
+-	if have set your code up properly, you should be able to re-run it and create a matrix of different size because n_dims will change.
+
+
+```{r q1}
+# assign to the variable n_dims a single random integer between 3 and 10.
+n_dims <- sample(3:10,1) #sample(range,# of integers)
+print(n_dims)
+
+# create a vector of consecutive integers
+# from 1 to n_dims^2.
+x <- seq(from=1,to=n_dims^2)
+print(x)
+
+# use the sample function to randomly reshuffle these values
+x_reshuffled <- sample(x)
+print(x_reshuffled)
+# create a square matrix with these elements
+m <- matrix(nrow=n_dims, ncol=n_dims, data=x_reshuffled) 
+  #set rows and cols to original variable for repeatibility
+
+# print out the matrix.
+print(m)
+
+# find a function in r to transpose the matrix
+m2 <- t(m)
+
+# print it out again and note how it has changed.
+print(m2)
+  # verified the change of rows and columns in this matrix
+
+# calculate the sum and the mean of the elements in the first row and the last row
+
+mean_firstrow <- mean(m2[1,]) #selects elements in column 1 of variable and averages 
+sum_firstrow <- sum(m2[1,])
+print(mean_firstrow)
+print(sum_firstrow)
+
+mean_lastrow <- mean(m2[n_dims,]) #set n_dims number of rows for repeatibility
+sum_lastrow <- sum(m2[n_dims,])
+print(mean_lastrow)
+print(sum_lastrow)
+
+# read about the eigen() function and use it on your matrix; typed: ?eigen
+# typeof(m2) #the usual matrix elements are integers
+
+m_eigen <- eigen(m2) # eigen transformed numbers
+# look carefully at the elements of $values and $vectors. What kind of numbers are these?
+# dig in with the typeof() function to figure out their type
+typeof(m_eigen$values) 
+typeof(m_eigen$vectors) 
+  # $values and $vectors elements are complex (imaginary numbers)
+
+```
+
+
+### Question 2:
+
+Create a list with the following named elements:
+
+- my_matrix, which is a 4 x 4 matrix filled with random uniform values
+
+- my_logical which is a 100-element vector of TRUE or FALSE values. Do this efficiently by setting up a vector of random values and then applying an inequality to it.
+
+- my_letters, which is a 26-element vector of all the lower-case letters in random order.
+
+- create a new list, which has the element[2,2] from the matrix, the second element of the logical vector, and the second element of the letters vector.
+
+- use the typeof() function to confirm the underlying data types of each component in this list
+
+- combine the underlying elements from the new list into a single atomic vector with the c() function.
+
+- what is the data type of this vector?
+
+
+```{r q2}
+# create a new list, which has the element[2,2] from the matrix, the second element of the logical vector, and the second element of the letters vector.
+my_list <- list(my_matrix = matrix(runif(16), ncol = 4, nrow = 4),
+                my_logical = runif(100)>0.5,
+                my_letters = sample(letters[1:26]))
+                
+  # my_matrix generates 16 random values to fix a matrix of 4 columns and 4 rows 
+  
+  # my_logical is a 100-element vector of TRUE or FALSE values--stores x variable's 100 values that are greater than 0.5, thus creates BOOLEAN  
+  
+  # my_letters, which is a 26-element vector of all the lower-case letters in random order.
+  # randomly samples 26x from letters function
+print(my_list)
+
+# create a new list, which has the element[2,2] from the matrix, the second element of the logical vector, and the second element of the letters vector.
+new_list <- list(my_list$my_matrix[2,2], my_list$my_logical[2], my_list$my_letters[2])
+print(new_list)
+
+# use the typeof() function to confirm the underlying data types of each component in this list
+#*queries data type by selecting list element from another list 
+typeof(new_list[[1]]) # double
+typeof(new_list[[2]]) # logical
+typeof(new_list[[3]]) # character
+
+# combine the underlying elements from the new list into a single atomic vector with the c() function.
+#*stores concatenated list element from another list 
+combined_list_vec <- c(new_list[[1]],new_list[[2]],new_list[[3]])
+print(combined_list_vec)
+
+# what is the data type of this vector?
+typeof(combined_list_vec)#character
+# per hierarchy of coercion, character is lowest and is what typeof queried
+
+```
+
+
+### Question 3:
+
+- Create a data frame with two variables (= columns) and 26 cases (= rows).
+call the first variable my_unis and fill it with a random uniform value from 0 to 10
+
+- call the second variable my_letters and fill it with 26 capital letters in random order.
+
+- for the first variable, use a single line of code in R to select 4 random rows and replace the numerical values in those rows with NA.
+
+- for the first variable, write a single line of R code to identify which rows have the missing values.
+
+- for the second variable, sort it in alphabetical order
+
+- calculate the column mean for the first variable.
+
+```{r q3}
+## Create a data frame with two variables (= columns) and 26 cases (= rows).
+
+# call the first variable my_unis and fill it with a random uniform value from 0 to 10
+my_unis <- runif(26,min=0,max=10) #obtain 26 random numbers
+print(my_unis)
+
+# call the second variable my_letters and fill it with 26 capital letters in random order.
+my_letters <- sample(LETTERS[1:26]) #samples randomly CAPITALIZED letters
+print(my_letters)
+
+# created that data frame, homestretch!
+d_frame <- data.frame(my_unis,my_letters) #add variables to dataframe
+print(d_frame) #view all data
+head(d_frame) #peek at data
+str(d_frame) #view metadata, e.g. nrow
+
+# for the first variable, use a single line of code in R to select 4 random rows and replace the numerical values in those rows with NA.
+d_frame[(sample(nrow(d_frame), size = 4, replace = FALSE)), 1] <- NA
+  #assign NA to random sample of 4 row values, w/o replacement
+print(d_frame)
+
+# for the first variable, write a single line of R code to identify which rows have the missing values.
+which(is.na.data.frame(d_frame)==TRUE)
+  #query and print which rows that NA is TRUE=present
+ 
+# for the second variable, sort it in alphabetical order
+sort(d_frame$my_letters)
+
+# calculate the column mean for the first variable.
+mean(d_frame[which(is.na.data.frame(d_frame[,1])==FALSE),1])
+    #average from selected subset which values are NOT "NA", by row, w/o replacement
+# this is another helpful option: mean(d_frame$my_unis, na.rm=TRUE)
+
+```
+

@@ -1,0 +1,217 @@
+---
+title: "Homework_6"
+author: "Cai McCann"
+date: "2/19/2020"
+output: 
+  html_document:
+      toc: true
+  chunk_output_type: console
+---
+
+--------------------------------------------------------------------------------
+
+```{r set up, warning=FALSE}
+#load library
+library(ggplot2) # for graphics 
+library(MASS) # for maximum likelihood estimation
+```
+
+### Simulated Data
+
+``` {r fake data}
+# generate some fake data here. Quick and dirty, a truncated normal distribution to work on the solution set
+z <- rnorm(n=3000,mean=0.2) #create a random normal distribution with 3000 observations and a mean of 0.2 and assign it to z variable
+z <- data.frame(1:3000,z) #convert number set 1 to 3000, z to be used for columns 
+names(z) <- list("ID","myVar") #assign row and column names "ID" and "myVar" respectively to the z vector
+z <- z[z$myVar>0,] #from the z vector, select the only the myVar rows >0 and subset it to z
+str(z) #Compactly Display the Structure of z
+summary(z$myVar)
+
+```
+
+### Plotting Simulated Data
+
+```{r plots of fake data, message=FALSE, warning=FALSE}
+# Plot histogram of data (preset to y = ..density.. for area under curve of 1)
+p1 <- ggplot(data=z, aes(x=myVar, y=..density..)) +
+  geom_histogram(color="grey60",fill="cornsilk",size=0.2) 
+print(p1)
+
+# Add empirical density curve (creates smoothed, fitted distribution)
+p1 <-  p1 +  geom_density(linetype="dotted",size=0.75)
+print(p1)
+
+# Get maximum likelihood parameters for normal function 
+normPars <- fitdistr(z$myVar,"normal")
+print(normPars)
+str(normPars)
+normPars$estimate["mean"] # note structure of getting a named attribute
+
+# Plot normal probability density--symmetrical and poor fit due skewed data
+meanML <- normPars$estimate["mean"]
+sdML <- normPars$estimate["sd"]
+
+xval <- seq(0,max(z$myVar),len=length(z$myVar))
+
+stat <- stat_function(aes(x = xval, y = ..y..), fun = dnorm, colour="red", n = length(z$myVar), args = list(mean = meanML, sd = sdML))
+p1 + stat
+
+ # Plot exponential probability density--unusually high and poor fit as well
+expoPars <- fitdistr(z$myVar,"exponential")
+rateML <- expoPars$estimate["rate"]
+
+stat2 <- stat_function(aes(x = xval, y = ..y..), fun = dexp, colour="blue", n = length(z$myVar), args = list(rate=rateML))
+p1 + stat + stat2
+
+# Plot uniform probability density--by its nature, a poor fit of these data
+stat3 <- stat_function(aes(x = xval, y = ..y..), fun = dunif, colour="darkgreen", n = length(z$myVar), args = list(min=min(z$myVar), max=max(z$myVar)))
+p1 + stat + stat2 + stat3
+ 
+# Plot gamma probability density--relatively appropriate fit to the data
+gammaPars <- fitdistr(z$myVar,"gamma")
+shapeML <- gammaPars$estimate["shape"]
+rateML <- gammaPars$estimate["rate"]
+
+stat4 <- stat_function(aes(x = xval, y = ..y..), fun = dgamma, colour="brown", n = length(z$myVar), args = list(shape=shapeML, rate=rateML))
+p1 + stat + stat2 + stat3 + stat4
+
+# Plot beta probability density--adjusted to 0-1 and perhaps an appropriate fit
+pSpecial <- ggplot(data=z, aes(x=myVar/(max(myVar + 0.1)), y=..density..)) +
+  geom_histogram(color="grey60",fill="cornsilk",size=0.2) + 
+  xlim(c(0,1)) +
+  geom_density(size=0.75,linetype="dotted")
+
+betaPars <- fitdistr(x=z$myVar/max(z$myVar + 0.1),start=list(shape1=1,shape2=2),"beta")
+shape1ML <- betaPars$estimate["shape1"]
+shape2ML <- betaPars$estimate["shape2"]
+
+statSpecial <- stat_function(aes(x = xval, y = ..y..), fun = dbeta, colour="orchid", n = length(z$myVar), args = list(shape1=shape1ML,shape2=shape2ML))
+pSpecial + statSpecial
+
+```
+
+### Clinical Dataset Comparison
+
+This dataset comprises 2 columns and 1,238 rows of patient ids and corresponding BMI measurements. 
+
+```{r my data}
+# Read in my file
+z <- read.table("C:\\Users\\clmcs\\Desktop\\BIOL381_McCann1\\clinical_cbmi_only.csv",header=TRUE,sep=",", stringsAsFactors=FALSE)
+str(z)
+summary(z)
+head(z)
+```
+
+### Plotting Clinical Dataset
+
+```{r plotting my data, warning=FALSE}
+
+# Plot histogram of data--these data are slightly more symmetrical than previous 
+p1 <- ggplot(data=z, aes(x=cbmi, y=..density..)) +
+  geom_histogram(bins=50,
+                 color="lightsteelblue",
+                 fill="paleturquoise",
+                 size=0.2) 
+print(p1)
+
+# Add empirical density curve
+p1 <-  p1 +  geom_density(linetype="dotted",size=0.75)
+print(p1)
+
+# Get maximum likelihood parameters for normal function
+normPars <- fitdistr(z$cbmi,"normal")
+print(normPars)
+str(normPars)
+normPars$estimate["mean"] # note structure of getting a named attribute
+
+# Plot normal probability density--not ideal fit to these slightly skewed data
+meanML <- normPars$estimate["mean"]
+sdML <- normPars$estimate["sd"]
+
+xval <- seq(0,max(z$cbmi),len=length(z$cbmi))
+
+stat <- stat_function(aes(x = xval, y = ..y..), fun = dnorm, colour="red", n = length(z$cbmi), args = list(mean = meanML, sd = sdML))
+p1 + stat
+
+# Plot exponential probability density--poor fit 
+expoPars <- fitdistr(z$cbmi,"exponential")
+rateML <- expoPars$estimate["rate"]
+
+stat2 <- stat_function(aes(x = xval, y = ..y..), fun = dexp, colour="blue", n = length(z$cbmi), args = list(rate=rateML))
+p1 + stat + stat2
+
+# Plot uniform probability density--poor fit
+stat3 <- stat_function(aes(x = xval, y = ..y..), fun = dunif, colour="darkgreen", n = length(z$cbmi), args = list(min=min(z$cbmi), max=max(z$cbmi)))
+p1 + stat + stat2 + stat3
+
+# Plot gamma probability density--gamma is slightly better than normal
+gammaPars <- fitdistr(z$cbmi,"gamma")
+shapeML <- gammaPars$estimate["shape"]
+rateML <- gammaPars$estimate["rate"]
+
+stat4 <- stat_function(aes(x = xval, y = ..y..), fun = dgamma, colour="brown", n = length(z$cbmi), args = list(shape=shapeML, rate=rateML))
+p1 + stat + stat2 + stat3 + stat4
+
+# Plot beta probability density--also somewhat better compared to normal
+pSpecial <- ggplot(data=z, aes(x=cbmi/(max(cbmi + 0.1)), y=..density..)) +
+  geom_histogram(color="grey60",fill="cornsilk",size=0.2) + 
+  xlim(c(0,1)) +
+  geom_density(size=0.75,linetype="dotted")
+
+betaPars <- fitdistr(x=z$cbmi/max(z$cbmi + 0.1),start=list(shape1=1,shape2=2),"beta")
+shape1ML <- betaPars$estimate["shape1"]
+shape2ML <- betaPars$estimate["shape2"]
+
+statSpecial <- stat_function(aes(x = xval, y = ..y..), fun = dbeta, colour="orchid", n = length(z$cbmi ), args = list(shape1=shape1ML,shape2=shape2ML)) 
+pSpecial + statSpecial
+
+# Find ML parameters given that Gamma probability density  is best (has to be positive)
+gammaPars
+
+```
+
+### Best-fitting distribution and Simulation with Associated ML parameters
+
+While it may appear gamma or beta distributions are options for these data, gamma does do well in that it is more realistic and does not have an upper bound the way beta does (largest data point = true upper bound). Therefore, I will choose the gamma distribution as my "best-fitting" distribution. 
+
+```{r best fit gamma with simulation, warning=FALSE}
+
+# Note: calculated ML parameters for Gamma probability density
+# > gammaPars
+#       shape         rate    
+#   20.93801915    0.78475512 
+#  ( 0.83526254) ( 0.03168299)
+
+# Set up gamma probability density parameters and simulation
+gammaPars <- fitdistr(z$cbmi,"gamma")
+shapeML <- gammaPars$estimate["shape"]
+rateML <- gammaPars$estimate["rate"]
+
+z2 <- rgamma(n=nrow(z),shape=20.93801915,rate=0.78475512) # input specific parameters
+
+d_z2 <- as.data.frame(z2) # make dataframe for graphing
+
+str(z2) # confirmed vector length matches original
+
+# Plot histogram of data
+p_z2 <- ggplot(data=d_z2, aes(x=z2, y=..density..)) +
+  geom_histogram(bins=50,
+                 color="grey60",
+                 fill="cornsilk",
+                 size=0.2) 
+
+# Plot Gamma probability density
+stat4_z2 <- stat_function(aes(x = z2, y = ..y..), fun = dgamma, colour="blue", n = length(z2), args = list(shape=shapeML, rate=rateML))
+
+p_z2 + stat4_z2 # layer gamma on histogram
+
+# My original data's histogram and gamma distribution for comparison
+p1 + stat4 
+
+```
+
+### Note on Comparison
+
+The original and simulated histogram profiles appear relatively similar. The main difference is that the original data are narrower while the simulated data have a broader spread and are slightly more symmetrical. That said, I think the model is doing a good job of simulating realistic data that match the original measurements overall. 
+
+

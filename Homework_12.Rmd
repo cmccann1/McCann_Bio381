@@ -1,0 +1,265 @@
+---
+title: "Homework_12"
+author: "Cai McCann"
+date: "4/15/2020"
+output: 
+  html_document:
+      toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+--------------------------------------------------------------------------------
+
+### Question 1: 
+
+For this exercise, use your newly-developed ggplot chops to create some nice graphs from your own data (If you do not have a good data frame to use for graphics, use one of the many built-in data frames from R (other than mpg, which we are using in class)). Experiment with different themes, theme base sizes, aesthetics, mappings, and faceting. When you are finished, try exporting them to high quality pdfs, jpgs, eps files, or other formats that you would use for submission to a journal.
+
+In this exercise, I encourage you to improve your graphics with elements that we have not (yet) covered in ggplot. For example, can you change the labels on a facet plot so that they are more informative than the variable names that are supplied from your data frame? Can you figure out how to add text annotations, lines and arrows to your graph? Can you figure out how to use custom colors that you have chosen for your fills and lines? Your resources for these explorations are google, Stack Overflow – and Lauren!
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Read in and Prepare Data
+
+```{r data, warning=FALSE, message=FALSE}
+# initiate libraries and read in data
+library(ggplot2)
+library(ggthemes)
+library(patchwork)
+library(dplyr)
+library(TeachingDemos)
+char2seed("pandemic dreams") # set random seed for reproducibility
+
+# my data
+z <- read.csv("C:\\Users\\clmcs\\Desktop\\BIOL381_McCann1\\clinical_full_clean.csv")
+
+# clean the data for coded responses and NAs
+z_clean <- z %>% 
+  rename(ptid=ï..ptid, # remove read-in discrepancies
+         BMI=cbmi) %>%
+  select(1:12) %>%
+  mutate(bp_ratio=lsystolic/ldiastolic) %>% # recode per CDC definitions
+  mutate(bmi_cat= case_when(BMI<18.5~'underweight',
+                            BMI<=24.9~'healthy weight',
+                            BMI<=29.9~'overweight',
+                            BMI>=30~'obese')) %>%
+  mutate(smoking_group=smoking) %>% # new variable & recode for my 3 groups
+  mutate_at(vars(15), recode, 
+            'Current Every Day Smoker'='Smoking',
+            'Current Some Day Smoker'='Smoking',
+            'Light Tobacco Smoker'='Smoking',
+            'Passive Smoke Exposure - Never Smoker'='Nonsmoking',
+            'Never Smoker '='Nonsmoking', # space at end of this label
+            'Former Smoker'='Formersmoking') %>%
+  filter(!is.na(BMI)) # central metric for our research so remove NAs
+
+# Note that I remove NAs for specific variables in specific graphs--I take that approach instead of removing all NAs for all data because that would eliminate too much useful data and severely limit the resulting dataset
+
+# verify cleanliness as desired
+# table(z_clean$smoking)
+# table(z_clean$smokecat)
+# table(z_clean$smoker)
+# table(z_clean$htn)
+# table(z_clean$dm)
+# summary(z_clean$BMI)
+# table(z_clean$bmi_cat)
+
+# Per CDC (<https://www.cdc.gov/healthyweight/assessing/bmi/adult_bmi/index.html>), "the standard weight status categories associated with BMI ranges for adults are shown in the following table.
+# BMI	Weight Status
+# Below 18.5	Underweight
+# 18.5 – 24.9	Normal or Healthy Weight
+# 25.0 – 29.9	Overweight
+# 30.0 and Above	Obese"
+```
+
+### Data Exploration (Subsetting the Data As Needed)
+
+#### Distribution of Data for Smoking Groups
+
+```{r boxplot}
+# prepare the dataset for graphing: 
+# 3 smoking groups
+# 4 BMI categories
+z_clean_bc_sg <- z_clean %>% filter(!is.na(bmi_cat)) %>% filter(!is.na(smoking_group)) # remove additional NAs
+
+# graph: Distribution of BMI by Smoking Groups (facets) and BMI categories (colors)'
+theme_set(theme_bw()) # pre-set the bw theme
+p_box <- ggplot(data=z_clean_bc_sg, 
+             mapping=aes(x=BMI, 
+                         y=bmi_cat,
+                         fill=bmi_cat)) + 
+  geom_boxplot() +
+  geom_point(position=position_dodge2(width=0.75), # adjust overlapping datapoints
+             alpha=0.5, # transparency
+             size=1) +
+  theme(plot.title=element_text(hjust=0.5)) + # center title
+  labs(title='BMI by Smoking Groups',
+       y='BMI category') +
+  facet_wrap(.~smoking_group, ncol=1, labeller=label_both) + # grouping variable & level name 
+  scale_fill_manual(values=c("royalblue", # manual switch to some interesting colors
+                             "thistle3", 
+                             "darkolivegreen", 
+                             "lightsalmon")) +
+  guides(fill = FALSE)# remove redundant legend 
+p_box
+```
+
+#### Percentage BMI Category by Smoking Group 
+
+```{r col, message=FALSE}
+# find the sample size, the proportion and the percentage of observations of different BMI categories in each smoking category ('Nonsmoking','Smoking','Formersmoking')
+# data preparation
+by_bmi_cat <- z_clean %>% 
+  arrange(BMI) %>%
+  group_by(smoking_group, bmi_cat) %>%
+  summarise(sampsize = n()) %>% # n() counts rows
+  mutate(prop = sampsize/ sum(sampsize), # create percentage metric for graphing
+         perc = 100 * prop,
+         perc = round(perc, 1)) %>%
+  filter(!is.na(bmi_cat)) # remove NAs
+# summary table output 
+by_bmi_cat
+
+#  Just to be sure that it is the smoking category % that sum to 100%, let's check:
+checksums <- by_bmi_cat %>%
+  group_by(smoking_group) %>%
+  summarize(tot = sum(perc))
+checksums # all good!
+
+# graph: Percentage Breakdown of BMI Categories by Smoking Groups 
+theme_set(theme_bw()) # pre-set the bw theme
+# note: plot perc b/c more informative than counts alone
+p_col <- ggplot(data = by_bmi_cat,
+       mapping = aes(x = smoking_group, y = perc, fill = bmi_cat)) + 
+  geom_col() +  #  or geom_bar(stat = 'identity')
+  theme(axis.text.x = element_text(angle = 65, hjust = 1, size = 8)) + # angle x axis labels
+  scale_x_discrete(limits=c('Nonsmoking','Smoking','Formersmoking')) + # adjust group order
+  labs(title='Percentage BMI Category \n by Smoking Group',
+       x=NULL, # removed b/c redundant
+       y='Percentage',
+       fill='BMI categories') + # rename legend
+  theme(legend.position='right') + # legend on right(for patchwork)/preference is bottom
+  scale_fill_manual(values=c("royalblue", 
+                             "thistle3", 
+                             "darkolivegreen", 
+                             "lightsalmon"))
+p_col
+```
+
+It is possible that the Smoking group actually has the greatest proportion of individuals who also have underweight or healthy weights. Conversely (and potentially nonintuitively), the Formersmoking group represents the greatest proportion of individuals who also have overweight or obese weights. 
+
+These patterns were observed in other studies and may indicate how much smoking affects health outcomes--some potential factors contributing to the pattern for current smokers include appetite suppressing features of smoking/nicotine [more here](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6042712/#:~:text=The%20causal%20association%20of%20smoking,smokers%20%5B6%E2%80%9311%5D.) while factors contributing to the pattern for former smokers are increased appetite, a decreased rate of metabolism, etc. [more here](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4401671/).
+
+#### Blood Pressure (Systolic) by BMI
+
+```{r lm, warning=FALSE, message=FALSE}
+# helpful to install this package for Marginal Histogram / Boxplot:
+library(ggExtra)
+theme_set(theme_bw()) # pre-set the bw theme
+
+# graph: Blood Pressure by BMI (and Smoking Group
+p_scatter <- ggplot(data=z_clean, mapping=aes(x=BMI,
+                                              y=lsystolic)) + 
+  geom_point(mapping=aes(color=smoking_group), alpha=0.5) + # separate regression line (to points, not ggplot body) 
+  geom_smooth(method='lm', se=FALSE, color='mediumpurple4', size=1) + # remove ribbon, customize color for contrast
+  # geom_count() + # optional, counts the sample size
+  theme(legend.position='right') + # legend on right(for patchwork)
+  labs(title='Blood Pressure by BMI',
+       y='Blood Pressure (systolic)',
+       color='Smoking group') + 
+    annotate(geom = "rect", xmin = 30, xmax = 80, # highlight data region as red rectangle
+             ymin = 120, ymax = 200, fill = "red", alpha = 0.2) +
+    annotate(geom = "text", x = 30, y = 180, # add a comment to specified region
+             label = "Patients considered both obese and \n with severely elevated blood pressure", hjust = 0, size=3)
+
+# I am intrigued by these Marginal Histogram / Boxplot (more information here: http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html#Scatterplot%20With%20Encircling)
+# so graphing specialized distributions and data trends here: 
+ggMarginal(p_scatter, type='boxplot', fill='transparent')
+ggMarginal(p_scatter, type='histogram', fill='transparent') # plot on distributions
+
+# (for patchwork)
+p_scatterggM <- ggMarginal(p_scatter, type='histogram', fill='transparent') # plot on distributions
+```
+
+#### Correlation matrix--investigate all of the numeric/integer type variables
+
+```{r cor matrix, message=FALSE}
+# install the package psych specifically for the matrix:
+library(psych)
+
+# subset specifically numeric/integer type variables
+z_cor <- z_clean %>% select(age_at_consent,
+                            smokecat, 
+                            BMI,
+                            lsystolic,
+                            htn,
+                            dm)
+# graph 
+theme_set(theme_bw()) # pre-set the bw theme
+pairs(z_cor) # shows general data in pairwise comparisons
+p_pairs <- pairs.panels(z_cor) # plot the correlation matrix (includes other visuals)
+p_pairs
+# cor(z_cor) # base package used to verify correlation values
+
+```
+
+Correlation appears relatively weak/moderate overall. Highlights (cor>0.3) include:
+
+- age (at consent) x systolic blood pressure 
+
+- BMI x systolic blood pressure
+
+- age (at consent) x hypertension
+
+- systolic blood pressure x hypertension
+
+- diabetes x hypertension
+
+*It is still important to note the different distributions of data (regardless of what we calculate for the correlation)
+
+### Combine Plots of Interest
+
+```{r themes and patchwork}
+# install specific package for patchwork
+library(patchwork)
+
+p_comb <- (p_col | p_scatterggM) / p_box 
+p_comb + 
+  plot_annotation( # options for annotations, removed for brevity: 
+  # title='A BMI-focused Overview of VDIS Data',
+  # subtitle='Exploring relationships between BMI, smoking behavior, and more',
+  caption='Data source: VDIS, 2004, PMID: 16279294',
+  tag_levels='A') + # love this! labels each plot as A, B, C, etc.
+  plot_layout(widths=1, # adjust aspect ratio of grid
+              guides='collect') # control location of guides (default='keep') for spacing of graphs
+  
+```
+
+
+### Export Visuals
+
+```{r ggsave}
+# export favorite plots!
+  # plot= for specific plot
+  # .extension for different formats
+# patchwork-combined plots (boxplot, barplot, )
+ggsave(filename="3plot_patched_graph.jpeg", plot=p_comb, height=7, width=12, dpi=600) 
+
+# correlation matrix
+ggsave(filename="cor_matrix_graph.jpeg", plot=p_pairs, height=6, width=6, dpi=600) 
+
+```
+
+*Here is one of the resulting, saved graphs (JPEG) for reference:*
+
+```{r, echo=FALSE}
+# installed package to be able to embed this: 
+# xfun::pkg_load2(c("htmltools", "mime"))
+
+# a single JPEG of the output graph
+xfun::embed_file('3plot_patched_graph.jpeg')
+
+```
