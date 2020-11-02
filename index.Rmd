@@ -12,6 +12,8 @@ output:
 
 ## Homework 1/2
 
+[Homework 1 Rmd](Homework_1.html)
+
 [Homework 1 Typora html](Typora_Homework_1.html)
 
 [Homework 1 Typora PDF](Typora_Homework_1.pdf)
