@@ -1,9 +1,4 @@
----
-title: "Homework_1"
-author: "Cai McCann"
-date: "1/15/2020"
-output: html_document
----
+
 # Cai McCann | Homework_1 | 1/15/2020
 
 
